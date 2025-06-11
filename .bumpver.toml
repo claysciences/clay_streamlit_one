@@ -7,3 +7,6 @@ tag_format = "v{new_version}"
 tag_scope = "default"
 commit = true
 tag = true
+
+[bumpver.file_patterns]
+"pyproject.toml" = ['version = "{version}"']
