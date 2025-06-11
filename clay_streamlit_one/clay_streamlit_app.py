@@ -7,14 +7,13 @@ from collections import OrderedDict
 from pathlib import Path
 
 import streamlit as st
-from loguru import logger
+import logging
 from streamlit import runtime
 from streamlit.web import cli as stcli
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
+# sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from clay_streamlit_one import __version__ as clay_st_version
 from clay_streamlit_one import AppPage
 
@@ -45,7 +44,7 @@ class ClayStreamlitApp():
 
     def _force_quit(self):
         pid = os.getpid()
-        logger.info(f"-- Sending (kill -9) to pid {pid} --")
+        logging.info(f"-- Sending (kill -9) to pid {pid} --")
         os.kill(pid, 9)  # Forcefully stops the server        
 
     def built_in_exception_handler(self, e):
@@ -53,8 +52,9 @@ class ClayStreamlitApp():
             levels = get_stacktrace_from_exception(e)
             stack_str = f"Last {len(levels)} levels of stack trace:"
             levels_str = "\n* " + "\n* ".join(levels)
-            self.my_error.error(f"{error_str}  {stack_str}  {levels_str}")
+            
             try:
+                self.my_error.error(f"{error_str}  {stack_str}  {levels_str}")
                 with st.expander(":red[**There was an error**. Click for details.]", expanded=False):
                     st.warning(":wrench: Critical Error :bomb:")
 
@@ -62,13 +62,12 @@ class ClayStreamlitApp():
             except Exception as e2:
                 st.error(f"oh my, another error, {e2}")
                 pass
-            # logger.error(f"EXCEPTION AT MAIN LAUNCHER LOOP, {e}")
-            logger.error(f"Exception occurred: {e.__class__.__name__}: {e}. Traceback: \n* {levels_str}\n---\n")
+
+            logging.error(f"Exception occurred: {e.__class__.__name__}: {e}. Traceback: \n* {levels_str}\n---\n")
 
     def run(self):
         if runtime.exists():
             try:
-
                 main_error, buttons, page_to_run = self.setup_page()
                 
                 st.session_state["clayst_JSON_SETTINGS_NAME"] = self.settings_filename
@@ -81,7 +80,7 @@ class ClayStreamlitApp():
                 self.exception_handler(e)
     
         else:
-            logger.info ("no streamlit found, relaunching with streamlit")
+            logging.info ("no streamlit found, relaunching with streamlit")
             sys.argv = ["streamlit", "run",
                         sys.argv[0], "--server.port", str(self.port), "--browser.serverAddress" , "localhost" ]
 
@@ -144,14 +143,13 @@ class ClayStreamlitApp():
                 raise Exception("No pages found - App must have at least one Page")
              
             elif len(self.pages_dict) == 1:     
+                # no need to list pages on sidebar, just run the single page
                 s1 = list(self.pages_dict.keys())[0]       
             
             else:
                 s1 = st.selectbox(label=":blue[**Select Page**]", 
                         options=self.pages_dict.keys(), key="app_page")                
-            
-            # no need to list pages on sidebar, just run the single page
-
+                     
             if self.sidebar_fun is not None:
                 self.sidebar_fun()
                 
@@ -161,9 +159,6 @@ class ClayStreamlitApp():
 
         page_object = self.pages_dict[page_to_run]
         
-        # msg = f"""{self.name} {self.page_icon} \\
-        #     Page **{page_object.name}**. \\
-        #     :blue[{self.version_str}.]"""
         msg = f"""{self.page_icon} {self.name}\\
             :blue[{self.version_str}]"""
         show_toast(msg)
@@ -188,7 +183,7 @@ def load_defaults():
         with open(settings_file, "r") as f:
             data = json.load(f)
             if len(data) == 0:
-                logger.debug(f"Loaded ClayStreamlitApp defaults file, no entries found. Loc '{settings_file}'")
+                logging.debug(f"Loaded ClayStreamlitApp defaults file, no entries found. Loc '{settings_file}'")
             else:
                 # strs = []
                 for k, v in data.items():
@@ -196,13 +191,12 @@ def load_defaults():
                         updated = True
                         st.session_state[k] = v
                         # strs.append(f"   {k:30}  -->  {v}")
-                logger.info(f"Loaded ClayStreamlitApp defaults file with {len(data)} entries")
+                logging.info(f"Loaded ClayStreamlitApp defaults file with {len(data)} entries")
 
     except FileNotFoundError:
-        # logger.debug(f"No defaults file found at '{settings_file}'")
         return {}, updated
     except json.JSONDecodeError as jde:
-        logger.error(f"Failed to load ClayStreamlitApp defaults, JSONDecodingError is {jde}")
+        logging.error(f"Failed to load ClayStreamlitApp defaults, JSONDecodingError is {jde}")
         return {}, updated
 
 
@@ -224,7 +218,7 @@ def update_defaults_entry(key, value):
         with open(settings_file, "w") as f:
             json.dump(data, f, indent=2)
     except Exception as e:
-        logger.warning(f"Failed to update settings file, for key {key}")
+        logging.warning(f"Failed to update settings file, for key {key}")
 
 def show_toast(msg):
     # sorry, st.cache_data didn't work for making this one-time, had to do it using session_state. yikes.
@@ -240,7 +234,7 @@ def show_toast(msg):
 
 def get_stacktrace_from_exception(e: Exception, num_levels=10):
 
-      # Extract the stack trace
+    # Extract the stack trace
     stack_trace = traceback.extract_tb(e.__traceback__)
 
     # Print the top 2 stack traces
@@ -252,34 +246,38 @@ def get_stacktrace_from_exception(e: Exception, num_levels=10):
         
 
 if __name__ == "__main__":
-    print(f"You should add some testing here for this.")
-    print(f"In general to use this library, you can start with")
-    
+   
     demo_code = """
     ## DEMO CODE ##
 
-#  TODO (ariel): add some testing                                            #
-#                                                                            #
-## Simplest way to use this library. You can run this as python <file.py>   ##
-##          no need to call streamlit directly                              ##
+    #                                                                            #
+    ## Simplest way to use this library. You can run this as python <file.py>   ##
+    ##          no need to call streamlit directly                              ##
 
-import streamlit as st
-from clay_streamlit import AppPage, ClayStreamlitApp
+    import streamlit as st
+    from clay_streamlit import AppPage, ClayStreamlitApp
 
 
-pages_list = [
-        AppPage.AppPage("first page", None, lambda: st.button("This is a button for the first page") ),
-        AppPage.AppPage("Hi", lambda: st.code(demo_code) and st.write("Success! ClayStreamlitApp is working")),
-        ]
+    pages_list = [
+            AppPage.AppPage("first page", None, lambda: st.button("This is a button for the first page") ),
+            AppPage.AppPage("Hi", lambda: st.code(demo_code) and st.write("Success! ClayStreamlitApp is working")),
+            ]
 
-myapp = ClayStreamlitApp.ClayStreamlitApp()
-myapp.set_pages(pages_list)
-myapp.run()
-"""
-    myapp = ClayStreamlitApp()
-    myapp.set_pages([
-        app_page("first page", None, lambda: st.button("This is a button for the first page") ),
-        app_page("Hi", lambda: st.subheader("Success! ClayStreamlitApp is working") and st.code(demo_code)),])
-    print(f"{demo_code}")
+    myapp = ClayStreamlitApp.ClayStreamlitApp()
+    myapp.set_pages(pages_list)
     myapp.run()
+    """
     
+    pages_list = [
+        AppPage.AppPage("first page", 
+            None, 
+            lambda: st.button("This is a button for the first page") 
+        ),
+        AppPage.AppPage("Hi", 
+            lambda: st.code(demo_code) and st.write("Success! ClayStreamlitApp is working"),
+            None
+        ),
+    ]
+    myapp = ClayStreamlitApp.ClayStreamlitApp()
+    myapp.set_pages(pages_list)
+    myapp.run()
