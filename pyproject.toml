@@ -5,7 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 version = "0.2.5"
 
-
 name = "clay_streamlit_one"  # Must be unique on PyPI
 description = "A minimal streamlit app framework"
 authors = [
@@ -15,7 +14,7 @@ readme = "README.md"
 requires-python = ">=3.7"
 
 dependencies = [
-    "streamlit>=1.30.0",
+    "streamlit>=1.35.0",
     "loguru"
 ]
 
@@ -28,3 +27,6 @@ classifiers = [
 
 [project.urls]
 "Homepage" = "https://github.com/claysciences/clay_streamlit_one"
+
+[project.optional-dependencies]
+dev = ["bumpver"]

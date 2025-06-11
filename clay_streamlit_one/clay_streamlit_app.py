@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import sys
@@ -7,16 +8,12 @@ from collections import OrderedDict
 from pathlib import Path
 
 import streamlit as st
-import logging
 from streamlit import runtime
 from streamlit.web import cli as stcli
-import sys
-from pathlib import Path
 
 # sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from clay_streamlit_one import __version__ as clay_st_version
 from clay_streamlit_one import AppPage
-
+from clay_streamlit_one import __version__ as clay_st_version
 
 # a bunch of defaults
 DEFAULT_PORT = 9988
@@ -25,12 +22,20 @@ DEFAULT_ICONS = [":feet:", ":eye:", ":eyes:", ":ear:", ":lips", ":tongue:", ":sh
 
 class ClayStreamlitApp():
     
-    def __init__(self, name=None, page_icon=None, port=None, sidebar_fun = None, 
-                 settings_filename="settings.json", version_str=None, logofile=None):
+    def __init__(self, 
+                 name=None, 
+                 page_icon=None, 
+                 port=None, 
+                 app_sidebar_fun = None, 
+                 settings_filename="settings.json", 
+                 version_str=None, 
+                 logofile=None
+                ):
+        
         self.name = name or DEFAULT_APP_NAME
         self.page_icon  = page_icon or random.choice(DEFAULT_ICONS)
         self.port = port or DEFAULT_PORT
-        self.sidebar_fun = sidebar_fun
+        self.app_sidebar_fun = app_sidebar_fun
         self.settings_filename = settings_filename
         if version_str is not None:
             self.version_str = version_str
@@ -144,14 +149,16 @@ class ClayStreamlitApp():
              
             elif len(self.pages_dict) == 1:     
                 # no need to list pages on sidebar, just run the single page
-                s1 = list(self.pages_dict.keys())[0]       
+                s1 = list(self.pages_dict.keys())[0]     
+                # st.divider()
+                st.write(f"**{s1}**")
             
             else:
                 s1 = st.selectbox(label=":blue[**Select Page**]", 
                         options=self.pages_dict.keys(), key="app_page")                
                      
-            if self.sidebar_fun is not None:
-                self.sidebar_fun()
+            if self.app_sidebar_fun is not None:
+                self.app_sidebar_fun()
                 
         return self.my_error, self.sidebar, s1
             
@@ -160,7 +167,7 @@ class ClayStreamlitApp():
         page_object = self.pages_dict[page_to_run]
         
         msg = f"""{self.page_icon} {self.name}\\
-            :blue[{self.version_str}]"""
+            :blue[version {self.version_str}]"""
         show_toast(msg)
 
         with self.sidebar:
