@@ -10,7 +10,7 @@ Are you tired of the boilerplate needed to actually run a useful streamlit app? 
 * Makes debugging and working in containers simpler
 
 ```
-from clay_streamlit import AppPage, ClayStreamlitApp
+from clay_streamlit_one import AppPage, ClayStreamlitApp
 
 pages_list = [
         AppPage.AppPage("first page", 
